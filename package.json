@@ -16,9 +16,11 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@hono/node-server": "^1.19.12",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
+    "hono": "^4.12.10",
     "postgres": "^3.4.8"
   },
   "devDependencies": {
