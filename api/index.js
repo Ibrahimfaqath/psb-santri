@@ -3,9 +3,61 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { santri } from '../db/schema.js'
+
+import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
+import { sign, verify } from 'hono/jwt';
+import bcrypt from 'bcryptjs';
+import { admins } from '../db/schema.js';
+import { eq } from 'drizzle-orm';
+
 const app = new Hono();
 
-console.log("cek index.js");
+// Ambil secret dari env
+const SECRET = process.env.JWT_SECRET;
+
+// Endpoint LOGIN
+app.post('/api/login', async (c) => {
+  const { username, password } = await c.req.parseBody();
+  const [user] = await db.select().from(admins).where(eq(admins.username, username));
+
+  if (user && await bcrypt.compare(password, user.password)) {
+    const token = await sign({
+      user: user.username, 
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // Berlakuu 24 jam
+    }, SECRET);
+
+    // Secure: true hanya untuk https (Vercel), false untuk localhost
+    const isProd = process.env.NODE_ENV === 'production';
+    setCookie(c, 'admin_session', token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'Lax'
+    });
+
+    return c.json({ message: "Login Berhasil" });
+  }
+  return c.json({ message: "Username atau Password salah!" }, 401);
+});
+
+// Endpoint LIHAT DATA (DILINDUNGI)
+app.get('/api/admin/santri', async (c) => {
+  const token = getCookie(c, 'admin_session');
+  if (!token) return c.json({ error: "Akses Ditolak" }, 401);
+
+  try {
+    await verify(token, SECRET);
+    const data = await db.select().from(santri);
+    return c.json(data);
+  } catch (err) {
+    return c.json({ error: "Sesi Habis, silakan login lagi" }, 401);
+  }
+});
+
+// Endpoint LOGOUT
+app.get('/api/logout', (c) => {
+  deleteCookie(c, 'admin_session');
+  return c.json({ message: "Berhasil Logout" });
+});
 
 
 // Melayani file statis dari folder public
