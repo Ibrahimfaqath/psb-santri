@@ -23,7 +23,7 @@ app.post('/api/login', async (c) => {
   if (user && await bcrypt.compare(password, user.password)) {
     const token = await sign({
       user: user.username, 
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // Berlakuu 24 jam
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // Berlaku 24 jam
     }, SECRET);
 
     // Secure: true hanya untuk https (Vercel), false untuk localhost
