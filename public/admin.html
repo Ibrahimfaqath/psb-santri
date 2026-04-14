@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin PSB</title>
 </head>
+
 <body>
     <div id="loginArea">
         <h2>login Admin</h2>
@@ -36,7 +38,7 @@
             formData.append('username', document.getElementById('user').value);
             formData.append('password', document.getElementById('pass').value);
 
-            const res = await fetch('/api/login', { method: 'POST', body: formData });
+            const res = await fetch('/api/login', { method: 'POST', body: formData, credentials: 'include' });
             if (res.ok) {
                 checkAuth();
             } else {
@@ -45,8 +47,11 @@
         }
 
         async function checkAuth() {
-            const res = await fetch('/api/admin/santri');
-            if(res.ok) {
+            const res = await fetch('/api/admin/santri', {
+                credentials: 'include'
+            });
+
+            if (res.ok) {
                 const data = await res.json();
                 document.getElementById('loginArea').style.display = 'none';
                 document.getElementById('adminContent').style.display = 'block';
@@ -64,7 +69,9 @@
         }
 
         async function logout() {
-            await fetch('/api/logout');
+            await fetch('/api/logout', {
+                credentials: 'include'
+            });
             location.reload();
         }
 
@@ -72,4 +79,5 @@
         checkAuth();
     </script>
 </body>
+
 </html>

@@ -1,3 +1,4 @@
+
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { z } from 'zod';
@@ -17,16 +18,23 @@ const SECRET = process.env.JWT_SECRET;
 
 // Endpoint LOGIN
 app.post('/api/login', async (c) => {
-  const { username, password } = await c.req.parseBody();
+  const body = await c.req.parseBody();
+
+  const username = body.username;
+  const password = body.password;
+
+  if (!username || !password) {
+    return c.json({ message: "Username / Password kosong!" }, 400);
+  }
+
   const [user] = await db.select().from(admins).where(eq(admins.username, username));
 
   if (user && await bcrypt.compare(password, user.password)) {
     const token = await sign({
-      user: user.username, 
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 // Berlaku 24 jam
+      user: user.username,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24
     }, SECRET);
 
-    // Secure: true hanya untuk https (Vercel), false untuk localhost
     const isProd = process.env.NODE_ENV === 'production';
     setCookie(c, 'admin_session', token, {
       httpOnly: true,
@@ -35,7 +43,10 @@ app.post('/api/login', async (c) => {
     });
 
     return c.json({ message: "Login Berhasil" });
+
+
   }
+
   return c.json({ message: "Username atau Password salah!" }, 401);
 });
 
@@ -44,11 +55,18 @@ app.get('/api/admin/santri', async (c) => {
   const token = getCookie(c, 'admin_session');
   if (!token) return c.json({ error: "Akses Ditolak" }, 401);
 
+  console.log("COOKIE:", token);
+  console.log("SECRET:", SECRET);
+
   try {
-    await verify(token, SECRET);
+    const payload = await verify(token, SECRET, 'HS256');
+    console.log("PAYLOAD:", payload);
+
     const data = await db.select().from(santri);
     return c.json(data);
+
   } catch (err) {
+    console.error("VERIFY ERROR:", err);
     return c.json({ error: "Sesi Habis, silakan login lagi" }, 401);
   }
 });
@@ -72,11 +90,11 @@ app.post('/api/submit', async (c) => {
 
     // 1. Validasi Input dengan Zod
     const schema = z.object({
-        nama: z.string().min(3, "Nama minimal 3 karakter"),
-        gender: z.enum(['Ikhwan', 'Akhwat'], { errormap: () => ({ message: "Pilih gender yang valid" }) }),
-        hafalan: z.coerce.number().min(0, "Hafalan tidak boleh minus"),
-        wali: z.string().min(3, "Nama wali wajib diisi"),
-        'g-recaptcha-response': z.string().min(1, "Centang Captcha terlebih dahulu!")
+      nama: z.string().min(3, "Nama minimal 3 karakter"),
+      gender: z.enum(['Ikhwan', 'Akhwat'], { errormap: () => ({ message: "Pilih gender yang valid" }) }),
+      hafalan: z.coerce.number().min(0, "Hafalan tidak boleh minus"),
+      wali: z.string().min(3, "Nama wali wajib diisi"),
+      'g-recaptcha-response': z.string().min(1, "Centang Captcha terlebih dahulu!")
 
     });
 
@@ -93,14 +111,12 @@ app.post('/api/submit', async (c) => {
     const verify = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
       body: formData,
-      headers: { 'Contect-Type': 'application/x-www-form-urlencoded' }
-
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
     const captchaRes = await verify.json();
     if (!captchaRes.success) {
       return c.json({ error: "Verifikasi Captcha Gagal" }, 400);
-
     }
 
     // 3. Simpan ke Database
@@ -122,8 +138,8 @@ app.post('/api/submit', async (c) => {
 
 // Global Error Handler
 app.onError((err, c) => {
-    console.error(`${err}`);
-    return c.json({ error: 'Terjadi kesalahan internal' }, 500);
+  console.error(`${err}`);
+  return c.json({ error: 'Terjadi kesalahan internal' }, 500);
 });
 
 export default app;

@@ -7,14 +7,13 @@ console.log("cek server.js");
 
 const app = new Hono();
 
-// 1. Melayani File Statis (Frontend)
-app.use('/*', serveStatic({ root: './public' }));
-
 // 2. Gunakan Lokiga API dari api/index.js
 app.route('/', apiApp);
 
-const port = 3223;
+// 1. Melayani File Statis (Frontend)
+app.use('/*', serveStatic({ root: './public' }));
 
+const port = 3223;
 
 serve({
     fetch: app.fetch,
