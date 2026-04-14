@@ -1,35 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin PSB</title>
+    <title>Admin Dashboard PSB</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Card Style */
+        .glass-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Login */
+        .login-box { max-width: 380px; margin: 100px auto; text-align: center; }
+        .login-box h2 { font-size: 2rem; margin-bottom: 2rem; color: #8b5cf6; }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 1rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            border: none;
+        }
+
+        .btn-primary { background: #8b5cf6; color: white; width: 100%; padding: 14px; }
+        .btn-primary:hover { background: #7c3aed; transform: scale(1.02); }
+        
+        .btn-danger { background: #ef4444; color: white; padding: 8px 16px; font-size: 0.8rem; }
+
+        /* Dashboard Header */
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        th { text-align: left; padding: 12px 20px; color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        td {
+            padding: 16px 20px;
+            background: #1e293b;
+        }
+
+        td:first-child { border-radius: 12px 0 0 12px; }
+        td:last-child { border-radius: 0 12px 12px 0; }
+
+        tr:hover td { background: #334155; color: white; }
+
+        .badge-juz { background: #4c1d95; color: #ddd6fe; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; }
+    </style>
 </head>
-
 <body>
-    <div id="loginArea">
-        <h2>login Admin</h2>
-        <input type="text" id="user" placeholder="Username"><br><br>
-        <input type="password" id="pass" placeholder="Password"><br><br>
-        <button onclick="login()">Masuk</button>
-    </div>
 
-    <div id="adminContent" style="display:none;">
-        <h2>Data Pendaftar Santri</h2>
-        <button onclick="logout()">Logout</button>
-        <hr>
-        <table border="1" cellpadding="10" id="tabelSantri">
-            <thead>
-                <tr>
-                    <th>Nama</th>
-                    <th>Gender</th>
-                    <th>Hafalan</th>
-                    <th>Wali</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="container">
+        <div id="loginArea" class="glass-card login-box">
+            <h2>Admin Login</h2>
+            <input type="text" id="user" placeholder="Username">
+            <input type="password" id="pass" placeholder="Password">
+            <button class="btn-primary" onclick="login()">Access Dashboard</button>
+        </div>
+
+        <div id="adminContent" style="display:none;">
+            <div class="dash-header">
+                <h2 style="margin:0">Database Santri</h2>
+                <button class="btn-danger" onclick="logout()">Logout</button>
+            </div>
+            
+            <div class="glass-card">
+                <table id="tabelSantri">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Gender</th>
+                            <th>Hafalan</th>
+                            <th>Wali</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -47,10 +127,7 @@
         }
 
         async function checkAuth() {
-            const res = await fetch('/api/admin/santri', {
-                credentials: 'include'
-            });
-
+            const res = await fetch('/api/admin/santri', { credentials: 'include' });
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('loginArea').style.display = 'none';
@@ -59,9 +136,9 @@
                 const tbody = document.querySelector('#tabelSantri tbody');
                 tbody.innerHTML = data.map(s => `
                   <tr>
-                    <td>${s.nama}</td>
+                    <td><strong>${s.nama}</strong></td>
                     <td>${s.gender}</td>
-                    <td>${s.hafalan}</td>
+                    <td><span class="badge-juz">${s.hafalan} Juz</span></td>
                     <td>${s.wali}</td>
                   </tr>  
                 `).join('');
@@ -69,15 +146,11 @@
         }
 
         async function logout() {
-            await fetch('/api/logout', {
-                credentials: 'include'
-            });
+            await fetch('/api/logout', { credentials: 'include' });
             location.reload();
         }
 
-        // Cek status saat halaman dibuka
         checkAuth();
     </script>
 </body>
-
 </html>
