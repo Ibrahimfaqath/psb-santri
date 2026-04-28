@@ -17,7 +17,7 @@ const app = new Hono();
 const SECRET = process.env.JWT_SECRET;
 
 // Endpoint LOGIN
-app.post('/api/login', async (c) => {
+app.post('/api/login', async (c) => { 
   const body = await c.req.parseBody();
 
   const username = body.username;
@@ -91,16 +91,22 @@ app.post('/api/submit', async (c) => {
     // 1. Validasi Input dengan Zod
     const schema = z.object({
       nama: z.string().min(3, "Nama minimal 3 karakter"),
-      gender: z.enum(['Ikhwan', 'Akhwat'], { errormap: () => ({ message: "Pilih gender yang valid" }) }),
-      hafalan: z.coerce.number().min(0, "Hafalan tidak boleh minus"),
+      gender: z.enum(["Ikhwan", "Akhwat"]),
+      hafalan: z.coerce.number().min(3, "Hafalan minimal 3 juz"),
       wali: z.string().min(3, "Nama wali wajib diisi"),
+      no_telepon: z.string().min(10, "Tulis dengan benar namanya"),
+      alamat: z.string().min(1, "Tulis alamat yang bener"),
       'g-recaptcha-response': z.string().min(1, "Centang Captcha terlebih dahulu!")
-
+    }).refine((data) => data.gender === "Ikhwan", {
+      message: "Maaf, saat ini tidak menerima perempuan",
+      path: ["gender"],
     });
 
     const parse = schema.safeParse(body);
+
+
     if (!parse.success) {
-      return c.json({ error: parse.error.errors[0].message }, 400);
+      return c.json({ error: parse.error.issues[0].message }, 400);
     }
 
     // 2. Verifikasi Captcha ke Server Google
@@ -124,13 +130,16 @@ app.post('/api/submit', async (c) => {
       nama: parse.data.nama,
       gender: parse.data.gender,
       hafalan: parse.data.hafalan,
-      wali: parse.data.wali
+      wali: parse.data.wali,
+      no_telepon: parse.data.no_telepon,
+      alamat: parse.data.alamat
     });
 
     return c.json({ message: "Pendaftaran Berhasil!" });
 
 
   } catch (error) {
+    console.log("Errornya adalah:", error)
     return c.json({ error: "Terjadi kesalahan sistem" }, 500);
   }
 });

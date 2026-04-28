@@ -5,7 +5,9 @@ export const santri = pgTable('santri', {
   nama: varchar('nama', { length: 255 }).notNull(),
   gender: varchar('gender', { length: 20 }).notNull(), // Misalnya: 'Laki-laki' atau 'Perempuan'
   hafalan: integer('hafalan').default(0),
-  wali: varchar('wali', { length: 255 }).notNull()
+  wali: varchar('wali', { length: 255 }).notNull(),
+  no_telepon: varchar('no_telepon', { length: 15 }).notNull(),
+  alamat: varchar('alamat', { length: 255}).notNull()
 });
 
 export const admins = pgTable('admins', {
